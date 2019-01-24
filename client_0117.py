@@ -61,9 +61,10 @@ def GET(client, fs, fn, gd):
 
 def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
 	#ファイルの一部を要求
-	message = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'
+	message = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	#GET要求メッセージを作成
 	print(message)
-	client.send(message.encode())
+	client.send(message.encode())	#GET要求メッセージを送信
+	#送信したGET要求に対する返信メッセージを受信
 	recv_bytearray = bytearray()
 	while True:
 		b = client.recv(1)
@@ -71,10 +72,11 @@ def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
 		if b == b'\n':
 			recv_str = recv_bytearray.decode()
 			break
-
 	recv_message = recv_str.split()
+	#返信メッセージに応じた処理
+	#'OK'であれば、ファイルデータを受信し、戻り値としてそのデータを返す
+	#そうでなければ、エラーメッセージを表示
 	if recv_message[0] == 'OK':				
-#		data = client.recv(tail - head).decode()
 		BUFSIZE = tail - head
 		data = ''
 		while True:	 	
@@ -91,7 +93,6 @@ def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
 	else:
 		print('Please rewrite the command.\n')
 		sys.exit()
-	return data
 
 
 def FILE_MAKE(data, fn):
@@ -108,7 +109,8 @@ def FILE_ADD(data, fn):
 	
 def REP(client, fn, dig):
 	#受信したファイルのダイジェストをサーバに報告
-	client.send(('REP ' + fn + ' ' + dig + '\n').encode())
+	client.send(('REP ' + fn + ' ' + dig + '\n').encode())	#REPメッセージを送信
+	#送信したREPメッセージに対する返信を受信し、それに応じた処理を行う
 	message_recv = client.recv(1024).decode()
 	message = message_recv.split()
 	print(message_recv)
@@ -149,10 +151,11 @@ def ASSIST_SIZE(client, sn, sp, fn):
 
 def ASSIST_PARTIAL(client, sn, sp, fn, gd, head, tail):
 	#経由地を通してファイルの一部を要求
-	message = str(sn) + ' ' + str(sp) +  '\n'
-	get = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'
+	message = str(sn) + ' ' + str(sp) +  '\n'	#serverのホスト名、ポート番号
+	get = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	#GET要求メッセージ
 	print(get)
-	client.send((message + ' ' + get + str(tail - head)).encode())
+	client.send((message + ' ' + get + str(tail - head)).encode())	#以上のメッセージを送信
+	#GET要求に対して送られてきたファイルデータを受信
 	BUFSIZE = int(tail - head)
 	data = ''
 	while True:	 	
@@ -173,9 +176,8 @@ def THREADING(sn, sp, fn, gd, head, tail):
 	return data
 
 def THREADING_ASSIST(an, ap, sn, sp, fn, gd, head, tail):
-	#assist経由
-	#スレッドを使用し、ファイルを分割して要求
-#	time.sleep(3.0)
+	#並行処理で行う処理
+	#別host経由でファイルの一部分を要求
 	thread_name = an	
 	thread_port = ap		
 	thread_socket = socket(AF_INET, SOCK_STREAM)
@@ -186,36 +188,15 @@ def THREADING_ASSIST(an, ap, sn, sp, fn, gd, head, tail):
 
 def bandwidth_measurement(client_name,server_name):
 	bandwidth = {}
-	recv_bytearray = [None]*6
-	#direct
-#	get_socket = socket(AF_INET, SOCK_STREAM)
-#	get_socket.connect((server_name, 52699))
-#	start_time = time.time()
-#	get_socket.send(('direct').encode())
-#	recv_bytearray[0] = bytearray()
-#	while True:
-#		b = get_socket.recv(1)
-#		recv_bytearray[0].append(b[0]) 
-#		if b == b'\n':
-#			recv_str = recv_bytearray[0].decode()
-#			break
-#	data = recv_str
-#	get_socket.close()
-#	end_time = time.time()	
-#	direct_server_time = end_time - start_time
-#	print('direct_server_time = {} [sec]'.format(direct_server_time))
-#	print('direct_bandwidth   = {} [bps]'.format(sys.getsizeof(data)*8/direct_server_time))
-#	print('sys.getsizeof(data) = {}'.format(sys.getsizeof(data)))
-#	bandwidth["direct"] = sys.getsizeof(data)*8/direct_server_time
+	recv_bytearray = [None]*6	
 	
-	#assist
 	assist_name = ['pbl1', 'pbl2', 'pbl3', 'pbl4', 'pbl5', 'pbl6', 'pbl7']	#ホスト名
-	assist_name.remove(server_name)
-	assist_name.remove(client_name)	#注:clientになるホスト名を除く 引数でclientになるホスト名を与える？
+	assist_name.remove(server_name) #serverになるホスト名を除く
+	assist_name.remove(client_name)	#clientになるホスト名を除く 
 	for i in range(len(assist_name)):	
 		assist_socket = socket(AF_INET, SOCK_STREAM)
 		assist_socket.connect((assist_name[i], 52699))
-		start_time = time.time()
+		start_time = time.time() #時間計測開始
 		assist_socket.send(('assist {} {}'.format(server_name, 52699)).encode())
 		recv_bytearray[i] = bytearray()
 		recv_str = 0
@@ -227,7 +208,7 @@ def bandwidth_measurement(client_name,server_name):
 				break
 		data = recv_str
 		assist_socket.close()
-		end_time = time.time()	
+		end_time = time.time()	#時間計測終了
 		pbl_time = end_time - start_time
 		print('{}_time          = {} [sec]'.format(assist_name[i], pbl_time))
 		print('{}_bandwidth     = {} [bps]'.format(assist_name[i], sys.getsizeof(data)*8/pbl_time))
