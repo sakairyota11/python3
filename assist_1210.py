@@ -42,7 +42,8 @@ def GET(client, fs, gm):
 		print('Please rewrite the command.\n')
 		sys.exit()	
 
-def THREADING(sn, sp, fs, gm):
+#並列処理で行う関数
+def THREADING(sn, sp, fs, gm):	#引数　サーバの名前、サーバポート、ファイルサイズ、GET要求メッセージ
 	thread_socket = socket(AF_INET, SOCK_STREAM)
 	thread_socket.connect((sn, sp))
 	data = GET(thread_socket, fs, gm)
@@ -102,6 +103,7 @@ def GET_PARTIAL(fs, gm, sn, sp):
 	return file_data
 
 def ASSIST(connection):
+	#clientから送信されたserverのIPアドレスあるいはホスト名、ポート番号、GET要求、ファイルサイズを返す
 	#サーバのIPアドレスあるいはホスト名、ポート番号を受信
 	recv_bytearray = bytearray()
 	while True:
@@ -133,24 +135,23 @@ if __name__ == '__main__':
 	print('The assist is ready to receive')
 
 	while True:
-		# クライアントからの接続があったら、それを受け付け、
-		# そのクライアントとの通信のためのソケットを作る
+		# clientからの接続があったら、それを受け付け、
+		# そのclientとの通信のためのソケットを作る
 		connection_socket, addr = assist_socket.accept()
 
-		#ファイル全体を要求
-		#クライアント -> 経由地 -> サーバ
+		#client -> 経由地 -> server
+		#clientから送られてきたGET要求をserverに送る
 		server_name, server_port, get_message, file_size = ASSIST(connection_socket)
 		
-		#サーバ -> 経由地
+		#server-> 経由地
+		#serverに送信したGET要求に対して送られてきたファイルデータを受信
 		get_socket = socket(AF_INET, SOCK_STREAM)
 		get_socket.connect((server_name, server_port))	
 		file_data = GET(get_socket, file_size, get_message)
 		get_socket.close()
 		print(len(file_data))
 
-		#Thread
-#		file_data = GET_PARTIAL(file_size, get_message, server_name, server_port)
-
-		#経由地 -> クライアント
+		#経由地 -> client
+		#ファイルデータをclientに送信
 		connection_socket.send(file_data.encode())
 
