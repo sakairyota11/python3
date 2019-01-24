@@ -104,7 +104,7 @@ def GET_PARTIAL(fs, gm, sn, sp):
 
 def ASSIST(connection):
 	#clientから送信されたserverのIPアドレスあるいはホスト名、ポート番号、GET要求、ファイルサイズを返す
-	#サーバのIPアドレスあるいはホスト名、ポート番号を受信
+	#serverのIPアドレスあるいはホスト名、ポート番号を受信
 	recv_bytearray = bytearray()
 	while True:
 		b = connection.recv(1)
@@ -112,7 +112,7 @@ def ASSIST(connection):
 		if b == b'\n':
 			recv_str = recv_bytearray.decode()
 			break
-	#クライアントが送ったGETメッセージを受信
+	#clientから送信されたGETメッセージを受信
 	recv_server_inf = recv_str.split()
 	recv_bytearray2 = bytearray()
 	while True:
