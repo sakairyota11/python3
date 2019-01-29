@@ -3,19 +3,20 @@
 #https://stackoverflow.com/questions/6893968/how-to-get-the-return-value-from-a-thread-in-python
 
 from socket import *
-from multiprocessing.pool import ThreadPool	#スレッド使用のため	
+from multiprocessing.pool import ThreadPool	#並行処理使用のため	
 import time
 import sys
 import pbl2018
 import threading	#スレッド使用のため
 
 def SIZE(client, fn):
-	#要求するファイルのデータサイズを取得
+	#要求するファイルのデータサイズを取得する関数
 	client.send(('SIZE ' + fn + '\n').encode())	#ファイルのサイズを要求
-	message = client.recv(1024).decode()		#メッセージを受け取る
+	message = client.recv(1024).decode()		#メッセージを受信
 	print(message)
 	message = message.split()
-
+	#受信したメッセージに応じた処理
+	#OKであれば、ファイルサイズを戻り値として返す
 	if message[0] == 'OK':
 		return int(message[2])
 	elif message[1] == 101 :
@@ -26,10 +27,11 @@ def SIZE(client, fn):
 		sys.exit()
 
 def GET(client, fs, fn, gd):
-	#ファイル全体を要求し、ファイルデータを受信
+	#ファイル全体を要求し、ファイルデータを受信する関数
 	message = 'GET ' + fn + ' ' + gd + ' ALL\n'
 	print(message)
-	client.send(message.encode())
+	client.send(message.encode())	#GET要求
+	#メッセージを受信
 	recv_bytearray = bytearray()
 	while True:
 		b = client.recv(1)
@@ -37,9 +39,10 @@ def GET(client, fs, fn, gd):
 		if b == b'\n':
 			recv_str = recv_bytearray.decode()
 			break
-
 	recv_message = recv_str.split()
 	print(recv_str)
+	#メッセージに応じた処理
+	#OKであれば、ファイルデータを受信し、それを戻り値として返す
 	if recv_message[0] == 'OK':				
 #		data = client.recv(int(fs)).decode()
 		BUFSIZE = int(fs)
@@ -60,7 +63,7 @@ def GET(client, fs, fn, gd):
 		sys.exit()	
 
 def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
-	#ファイルの一部を要求
+	#ファイルの一部を要求する関数
 	message = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	#GET要求メッセージを作成
 	print(message)
 	client.send(message.encode())	#GET要求メッセージを送信
@@ -108,9 +111,9 @@ def FILE_ADD(data, fn):
 	f.close()
 	
 def REP(client, fn, dig):
-	#受信したファイルのダイジェストをサーバに報告
+	#受信したファイルのダイジェストをサーバに報告する関数
 	client.send(('REP ' + fn + ' ' + dig + '\n').encode())	#REPメッセージを送信
-	#送信したREPメッセージに対する返信を受信し、それに応じた処理を行う
+	#送信したREPメッセージに対する返信を受信し、それに応じた処理
 	message_recv = client.recv(1024).decode()
 	message = message_recv.split()
 	print(message_recv)
@@ -127,13 +130,12 @@ def REP(client, fn, dig):
 		sys.exit()
 
 def ASSIST(client, sn, sp, fn, fs, gd):
-	#経由地にサーバのIPアドレスあるいはホスト名、ポート番号、GETメッセージ、ファイルサイズを送信
+	#経由地にサーバのIPアドレスあるいはホスト名、ポート番号、GETメッセージ、ファイルサイズを送信する関数
 	#ファイル全体を要求
 	message = str(sn) + ' ' + str(sp) +  '\n'
 	get = 'GET ' + fn + ' ' + gd + ' ALL\n'
 	client.send((message+ ' ' + get + str(fs)).encode())
-	#経由地からデータを受信
-#	data = client.recv(fs).decode()
+	#経由地からデータを受信し、それを戻り値として返す
 	BUFSIZE = fs
 	data = ''
 	while True:	 	
@@ -150,12 +152,12 @@ def ASSIST_SIZE(client, sn, sp, fn):
 	return size_message
 
 def ASSIST_PARTIAL(client, sn, sp, fn, gd, head, tail):
-	#経由地を通してファイルの一部を要求
+	#経由地を通してファイルの一部を要求する関数
 	message = str(sn) + ' ' + str(sp) +  '\n'	#serverのホスト名、ポート番号
 	get = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	#GET要求メッセージ
 	print(get)
 	client.send((message + ' ' + get + str(tail - head)).encode())	#以上のメッセージを送信
-	#GET要求に対して送られてきたファイルデータを受信
+	#GET要求に対して送られてきたファイルデータを受信し、それを戻り値として返す
 	BUFSIZE = int(tail - head)
 	data = ''
 	while True:	 	
@@ -176,8 +178,8 @@ def THREADING(sn, sp, fn, gd, head, tail):
 	return data
 
 def THREADING_ASSIST(an, ap, sn, sp, fn, gd, head, tail):
-	#並行処理で行う処理
-	#別host経由でファイルの一部分を要求
+	#並行処理で行う関数
+	#server以外の別host経由でファイルの一部分を要求、受信し、それを戻り値として返す
 	thread_name = an	
 	thread_port = ap		
 	thread_socket = socket(AF_INET, SOCK_STREAM)
@@ -187,6 +189,8 @@ def THREADING_ASSIST(an, ap, sn, sp, fn, gd, head, tail):
 	return data
 
 def bandwidth_measurement(client_name,server_name):
+	#host1つを経由したclient, server間の帯域幅を測定する関数
+	#測定結果をリストで戻り値として返す
 	bandwidth = {}
 	recv_bytearray = [None]*6	
 	
@@ -197,6 +201,7 @@ def bandwidth_measurement(client_name,server_name):
 		assist_socket = socket(AF_INET, SOCK_STREAM)
 		assist_socket.connect((assist_name[i], 52699))
 		start_time = time.time() #時間計測開始
+		#1500文字分のデータを要求、受信
 		assist_socket.send(('assist {} {}'.format(server_name, 52699)).encode())
 		recv_bytearray[i] = bytearray()
 		recv_str = 0
@@ -213,17 +218,16 @@ def bandwidth_measurement(client_name,server_name):
 		print('{}_time          = {} [sec]'.format(assist_name[i], pbl_time))
 		print('{}_bandwidth     = {} [bps]'.format(assist_name[i], sys.getsizeof(data)*8/pbl_time))
 		print('------------------------------')
-#		print('sys.getsizeof(data) = {}'.format(sys.getsizeof(data)))
 		bandwidth[str(assist_name[i])] = sys.getsizeof(data)*8/pbl_time
 	return bandwidth
 
 if __name__ == '__main__':
 	# main program
-	client_name = sys.argv[1]
-	server_name = sys.argv[2]	#第一引数　サーバのIPアドレスあるいはホスト名
-	server_port = int(sys.argv[3])	#第二引数　ポート番号
-	file_name = sys.argv[4]		#第三引数　ファイル名
-	token_str = sys.argv[5]		#第四引数　トークン文字列
+	client_name = sys.argv[1]	#第1引数　clientのIPアドレスあるいはホスト名
+	server_name = sys.argv[2]	#第2引数　serverのIPアドレスあるいはホスト名
+	server_port = int(sys.argv[3])	#第3引数　ポート番号
+	file_name = sys.argv[4]		#第4引数　ファイル名
+	token_str = sys.argv[5]		#第5引数　トークン文字列
 	genkey_data = pbl2018.genkey(token_str)
 	
 	#帯域幅を測定----------------------------------------------------------
@@ -250,8 +254,8 @@ if __name__ == '__main__':
 	file_size = SIZE(size_socket, file_name)
 	size_socket.close()	
 	
-	#スレッドを使用し、ファイルを等分割して要求(assist経由)---------------------------------
-	#帯域幅に応じてファイルを分割
+	#並列処理により、ファイルを分割して要求(assist経由)---------------------------------
+	#帯域幅の割合に応じてファイルを分割
 	rate = []
 	file_size_partial = []
 	for i in bandwidth:
@@ -269,15 +273,15 @@ if __name__ == '__main__':
 	a = 8	#経由地１ 分割数
 	b = 4	#経由地２ 分割数
 	c = 3	#経由地３ 分割数
+	#初期化
 	pool = [None]*(a + b + c)	
 	threads = [None]*(a + b + c)
 	data = [None]*(a + b + c)
 	for i in range(a+b+c):
 		pool[i] = ThreadPool(processes=1)
-	t1 = time.time()
 	head = [None] * (a + b + c)
 	tail = [None] * (a + b + c)
-
+	#ファイルを分割し先頭、末尾
 	#head
 	for i in range(a):
 		head[i] = file_size_partial[0] // a * i
@@ -316,6 +320,7 @@ if __name__ == '__main__':
 			tail[i+a+b] = file_size
 	#	print('head[{}] = {}'.format(i+a+b, head[i+a+b]), end = "")
 	#	print('      tail[{}] = {}'.format(i+a+b, tail[i+a+b]))
+	t1 = time.time()  #時間計測開始
 	#並列処理の準備
 	for i in range(a):
 		threads[i] = pool[i].apply_async(THREADING_ASSIST, args=(assist_name[0], assist_port, server_name, server_port, file_name, genkey_data, head[i], tail[i]))
