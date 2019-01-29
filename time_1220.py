@@ -41,17 +41,22 @@ if __name__ == '__main__':
 		# クライアントからの接続があったら、それを受け付け、
 		# そのクライアントとの通信のためのソケットを作る
 		s, addr = assist_socket.accept()
-		message = s.recv(1024).decode().split()
+		message = s.recv(1024).decode().split() #メッセージを受信
 		send_data = ''
+		#メッセージに応じた処理
 		if message[0] == 'direct':   
+			#serverのhostでの処理
+			#1500文字分のデータを生成し、送信
 			for i in range(1500):
 				send_data += 'a' 		
 			s.send(("{}\n".format(send_data)).encode())
 			print('send {}'.format(sys.getsizeof(send_data)))
 		elif message[0] == 'assist':
+			#server以外のhostでの処理
+			#server名、serverのポート番号を取得
 			server_name, server_port = message[1], int(message[2])
 
-			#サーバ -> 経由地
+			#serverからデータを受信
 			s_socket = socket(AF_INET, SOCK_STREAM)
 			s_socket.connect((server_name, server_port))	
 			s_socket.send(('direct').encode())
@@ -65,6 +70,6 @@ if __name__ == '__main__':
 			data = recv_str
 			s_socket.close()
 
-			#経由地 -> クライアント
+			#データをclientとなるhostに送信
 			s.send(data.encode())
 
