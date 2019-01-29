@@ -64,7 +64,8 @@ def GET(client, fs, fn, gd):
 
 def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
 	#ファイルの一部を要求する関数
-	message = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	#GET要求メッセージを作成
+	#GET要求メッセージを作成
+	message = 'GET ' + fn + ' ' + gd + ' PARTIAL ' + str(head) + ' ' + str(tail) + '\n'	
 	print(message)
 	client.send(message.encode())	#GET要求メッセージを送信
 	#送信したGET要求に対する返信メッセージを受信
