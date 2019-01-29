@@ -99,7 +99,8 @@ def GET_PARTIAL(client, sn, sp, fn, gd, head, tail):
 
 
 def FILE_MAKE(data, fn):
-	#ファイル作成
+	#ファイルを作成する関数　
+	#引数：ファイルデータ、ファイル名
 	f = open(fn, 'w')
 	f.write(data)
 	f.close()
@@ -260,7 +261,7 @@ if __name__ == '__main__':
 	file_size_partial = []
 	for i in bandwidth:
 		r = i/sum(bandwidth)
-		rate.append(round(r,2))
+		rate.append(round(r,2))	#小数点以下第2位まで
 	print("rate              = ", end = "")
 	print(rate)
 	for i in rate:
@@ -281,7 +282,7 @@ if __name__ == '__main__':
 		pool[i] = ThreadPool(processes=1)
 	head = [None] * (a + b + c)
 	tail = [None] * (a + b + c)
-	#ファイルを分割し先頭、末尾
+	#ファイルを分割し、要求するファイルデータの先頭、末尾を決定
 	#head
 	for i in range(a):
 		head[i] = file_size_partial[0] // a * i
@@ -335,12 +336,11 @@ if __name__ == '__main__':
 	#print(tail)
 	#print(threads)
 
-	#スレッドを用いたファイル要求開始	
+	#並行処理によりファイル要求開始	
 	for i in range(a+b+c):
 		data[i] = threads[i].get()
 	#ファイル作成のためのデータ生成 
 	for i in range(len(data)):
-		#print('{0}  :  {1}'.format(tail[i] - head[i] + 1, len(data[i])))
 		print(len(data[i]))
 		file_data += data[i]
 	print(len(file_data))
