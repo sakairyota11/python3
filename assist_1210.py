@@ -2,7 +2,7 @@
 # client_assist.py
 
 from socket import *
-from multiprocessing.pool import ThreadPool	#スレッド使用のため
+from multiprocessing.pool import ThreadPool	#並列処理使用のため
 import time
 import sys
 # import pbl2018
@@ -43,7 +43,7 @@ def GET(client, fs, gm):
 		sys.exit()	
 
 #並列処理で行う関数
-def THREADING(sn, sp, fs, gm):	#引数　サーバの名前、サーバポート、ファイルサイズ、GET要求メッセージ
+def THREADING(sn, sp, fs, gm):	#引数：　サーバの名前、サーバポート、ファイルサイズ、GET要求メッセージ
 	thread_socket = socket(AF_INET, SOCK_STREAM)
 	thread_socket.connect((sn, sp))
 	data = GET(thread_socket, fs, gm)
@@ -103,7 +103,7 @@ def GET_PARTIAL(fs, gm, sn, sp):
 	return file_data
 
 def ASSIST(connection):
-	#clientから送信されたserverのIPアドレスあるいはホスト名、ポート番号、GET要求、ファイルサイズを返す
+	#clientから送信されたserverのIPアドレスあるいはホスト名、ポート番号、GET要求、ファイルサイズを返す関数
 	#serverのIPアドレスあるいはホスト名、ポート番号を受信
 	recv_bytearray = bytearray()
 	while True:
@@ -139,11 +139,12 @@ if __name__ == '__main__':
 		# そのclientとの通信のためのソケットを作る
 		connection_socket, addr = assist_socket.accept()
 
-		#client -> 経由地 -> server
-		#clientから送られてきたGET要求をserverに送る
+		#client -> 経由地
+		#clientから送られてきたGET要求等を受信
 		server_name, server_port, get_message, file_size = ASSIST(connection_socket)
 		
-		#server-> 経由地
+		#経由地 -> server -> 経由地
+		#serverにclientから送られてきたGET要求を送信
 		#serverに送信したGET要求に対して送られてきたファイルデータを受信
 		get_socket = socket(AF_INET, SOCK_STREAM)
 		get_socket.connect((server_name, server_port))	
