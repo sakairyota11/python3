@@ -2,7 +2,7 @@
 # client_assist.py
 
 from socket import *
-from multiprocessing.pool import ThreadPool	#並列処理使用のため
+from multiprocessing.pool import ThreadPool	#並行処理使用のため
 import time
 import sys
 # import pbl2018
@@ -42,8 +42,8 @@ def GET(client, fs, gm):
 		print('Please rewrite the command.\n')
 		sys.exit()	
 
-#並列処理で行う関数
 def THREADING(sn, sp, fs, gm):	#引数：　サーバの名前、サーバポート、ファイルサイズ、GET要求メッセージ
+	#並行処理で行う関数　ファイルデータを要求する
 	thread_socket = socket(AF_INET, SOCK_STREAM)
 	thread_socket.connect((sn, sp))
 	data = GET(thread_socket, fs, gm)
